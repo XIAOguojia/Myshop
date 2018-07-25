@@ -71,8 +71,8 @@ public class RegisterServlet extends HttpServlet {
         if (isRegisterSuccess) {
             //发送邮件激活
             String emailMsg = user.getName()+"你这小傻逼，终于注册成功了啊，过来激活吧<a " +
-                    "href='http://localhost:8080/Myshop/activeCode="+activeCode+"'>" +
-                    "http://localhost:8080/Myshop/activeCode="+activeCode+"</a>";
+                    "href='http://localhost:8080/myshop/active?activeCode="+activeCode+"'>" +
+                    "http://localhost:8080/myshop/active?activeCode="+activeCode+"</a>";
             try {
                 MailUtils.sendMail(user.getEmail(),emailMsg);
             } catch (MessagingException e) {

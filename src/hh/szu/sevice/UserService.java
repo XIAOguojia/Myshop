@@ -24,4 +24,20 @@ public class UserService {
        //注册信息成功插入数据库，row>0
         return row>0?true:false;
     }
+
+    public void active(String activeCode) throws SQLException {
+        UserDao dao = new UserDao();
+        dao.active(activeCode);
+    }
+
+    public boolean checkUserName(String username) {
+        UserDao dao = new UserDao();
+        Long count = 0L;
+        try {
+            count = dao.checkUserName(username);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return count>0;
+    }
 }

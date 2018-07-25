@@ -3,6 +3,7 @@ package hh.szu.dao;
 import hh.szu.domain.User;
 import hh.szu.utils.DataSourceUtils;
 import org.apache.commons.dbutils.QueryRunner;
+import org.apache.commons.dbutils.handlers.ScalarHandler;
 
 import java.sql.SQLException;
 
@@ -21,5 +22,20 @@ public class UserDao {
                 user.getName(),user.getEmail(),user.getTelephone(),user.getBirthday(),
                 user.getSex(),user.getState(),user.getCode());
         return row;
+    }
+
+    //激活
+    public void active(String activeCode) throws SQLException {
+        QueryRunner queryRunner = new QueryRunner(DataSourceUtils.getDataSource());
+        String sql = "update user set state=? where code=?";
+        queryRunner.update(sql,1,activeCode);
+    }
+
+    //校验用户名是否存在
+    public Long checkUserName(String username) throws SQLException {
+        QueryRunner runner = new QueryRunner(DataSourceUtils.getDataSource());
+        String sql = "select count(*) from user where username=?";
+        Long query = (Long) runner.query(sql, new ScalarHandler(), username);
+        return query;
     }
 }
