@@ -134,7 +134,7 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label for="inputPassword3" class="col-sm-2 control-label">密码</label>
+                    <label for="pwd" class="col-sm-2 control-label">密码</label>
                     <div class="col-sm-6">
                         <input type="password" class="form-control" id="pwd" name="password"
                                placeholder="请输入密码">
