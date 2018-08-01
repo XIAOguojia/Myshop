@@ -1,6 +1,7 @@
 package hh.szu.sevice;
 
 import hh.szu.dao.ProductDao;
+import hh.szu.domain.Category;
 import hh.szu.domain.Product;
 
 import java.sql.SQLException;
@@ -36,5 +37,17 @@ public class ProductService {
             e.printStackTrace();
         }
         return newProductList;
+    }
+
+    //准备分类数据
+    public List<Category> findAllCategory() {
+        ProductDao dao = new ProductDao();
+        List<Category> categoryList = null;
+        try {
+            categoryList = dao.findAllCategory();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return categoryList;
     }
 }

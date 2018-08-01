@@ -1,5 +1,6 @@
 package hh.szu.web.servlet;
 
+import hh.szu.domain.Category;
 import hh.szu.domain.Product;
 import hh.szu.sevice.ProductService;
 
@@ -27,10 +28,13 @@ public class IndexServlet extends HttpServlet {
         //准备热门商品
         List<Product> hotProductList = service.findHotProductList();
 
-
         //准备最新商品
         List<Product> newProductList = service.findNewProductList();
 
+        //准备分类数据
+//        List<Category> categoryList = service.findAllCategory();
+//
+//        request.setAttribute("categoryList",categoryList);
         request.setAttribute("hotProductList", hotProductList);
         request.setAttribute("newProductList", newProductList);
 

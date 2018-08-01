@@ -1,5 +1,6 @@
 package hh.szu.dao;
 
+import hh.szu.domain.Category;
 import hh.szu.domain.Product;
 import hh.szu.utils.DataSourceUtils;
 import org.apache.commons.dbutils.QueryRunner;
@@ -28,5 +29,12 @@ public class ProductDao {
         QueryRunner queryRunner = new QueryRunner(DataSourceUtils.getDataSource());
         String sql = "select * from product order by pdate desc limit ?,?";
         return queryRunner.query(sql, new BeanListHandler<Product>(Product.class),  0, 9);
+    }
+
+    //准备分类数据
+    public List<Category> findAllCategory() throws SQLException {
+        QueryRunner queryRunner = new QueryRunner(DataSourceUtils.getDataSource());
+        String sql = "select * from category";
+        return queryRunner.query(sql, new BeanListHandler<Category>(Category.class));
     }
 }
