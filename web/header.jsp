@@ -58,7 +58,7 @@
                     function(data) {
                        //动态创建
                         for (var i = 0; i < data.length; i++) {
-                            content += "<li><a href='#'>"+data[i].cname+"</a></li>"
+                            content += "<li><a href='${pageContext.request.contextPath}/productListByCategory?cid="+data[i].cid+"'>"+data[i].cname+"</a></li>"
                         }
 
                         //将拼接好的li放到ul中
