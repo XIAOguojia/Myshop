@@ -56,7 +56,7 @@ public class ProductInfoServlet extends HttpServlet {
 
                     //将集合转回字符串
                     StringBuilder stringBuilder = new StringBuilder();
-                    for (int i = 0; i < list.size(); i++) {
+                    for (int i = 0; i < list.size() && i < 7; i++) {
                         stringBuilder.append(list.get(i));
                         if (i != list.size() - 1) {
                             stringBuilder.append("-");
