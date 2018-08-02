@@ -78,6 +78,9 @@ body {
 								value="加入购物车" type="button">
 							</a> &nbsp;收藏商品
 						</div>
+						<div style="text-align: center">
+                            <a href="${pageContext.request.contextPath }/productListByCategory?cid=${cid}&currentPage=${currentPage}">返回商品列表</a>
+                        </div>
 					</div>
 				</div>
 			</div>
