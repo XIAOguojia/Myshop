@@ -1,23 +1,15 @@
 package hh.szu.web.servlet;
 
 import com.google.gson.Gson;
-import hh.szu.domain.Category;
-import hh.szu.domain.PageBean;
-import hh.szu.domain.Product;
+import hh.szu.domain.*;
 import hh.szu.sevice.ProductService;
 
 import javax.servlet.Servlet;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.*;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 @WebServlet(name = "ProductServlet", urlPatterns = "/Product")
 public class ProductServlet extends BaseServlet {
@@ -61,7 +53,7 @@ public class ProductServlet extends BaseServlet {
         request.setAttribute("hotProductList", hotProductList);
         request.setAttribute("newProductList", newProductList);
 
-        request.getRequestDispatcher("/index.jsp").forward(request,response);
+        request.getRequestDispatcher("/index.jsp").forward(request, response);
     }
 
     //显示商品的详细信息
@@ -153,9 +145,93 @@ public class ProductServlet extends BaseServlet {
             }
         }
 
-        request.setAttribute("historyProductList",historyProductList);
+        request.setAttribute("historyProductList", historyProductList);
 
         request.getRequestDispatcher("/product_list.jsp").forward(request, response);
+    }
+
+
+    //将商品添加到购物车中
+    public void addProductToCart(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        HttpSession session = request.getSession();
+        ProductService service = new ProductService();
+        //获得要放到购物车中的商品的pid
+        String pid = request.getParameter("pid");
+        //获得商品的购买数量
+        int buyNum = Integer.parseInt(request.getParameter("buyNum"));
+        if (buyNum <= 0) {
+            throw new IllegalArgumentException("购买商品的数量不能少于1");
+        }
+
+        //获得Product对象
+        Product product = service.findProductByPid(pid);
+        //计算该商品总共的价钱
+        double subTotal = product.getShop_price() * buyNum;
+        //将Product、buyNum、subTotal封装到CartItem中
+        CartItem cartItem = new CartItem();
+        cartItem.setProduct(product);
+        cartItem.setBuyNum(buyNum);
+        cartItem.setSubtotal(subTotal);
+
+        Cart cart = (Cart) session.getAttribute("cart");
+        if (cart == null) {
+            cart = new Cart();
+        }
+
+        //先判断购物车中是否已经包含次购物项了--判断key是否已经存在
+        //如果购物车中已经存在该商品--将现在买的数量与原有的数量进行相加操作
+        Map<String, CartItem> cartItems = cart.getCartItems();
+        if (cartItems.containsKey(pid)) {
+            cartItem = cartItems.get(pid);
+            //取出原有的商品购买数量与现在的相加
+            cartItem.setBuyNum(cartItem.getBuyNum() + buyNum);
+            //重新计算小计
+            cartItem.setSubtotal(cartItem.getSubtotal() + subTotal);
+        }
+        //将购物项放入购物车中
+        cartItems.put(pid, cartItem);
+
+
+        //计算总计
+        double total = cart.getTotal() + subTotal;
+        cart.setTotal(total);
+
+        //将购物车放回session中
+        session.setAttribute("cart", cart);
+
+        //重定向到cart.jsp,转发会有问题，以为转发地址没变会导致用户在刷新网页的时候自动再购买一次有bug
+//        request.getRequestDispatcher("cart.jsp").forward(request,response);
+        response.sendRedirect(request.getContextPath() + "/cart.jsp");
+    }
+
+    //将单一商品从购物车删除
+    public void delProFromCart(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        //获得商品pid
+        String pid = request.getParameter("pid");
+        //获得购物车对象
+        HttpSession session = request.getSession();
+        Cart cart = (Cart) session.getAttribute("cart");
+        if (cart != null) {
+            //获得购物项
+            Map<String, CartItem> cartItems = cart.getCartItems();
+            //重新计算总价钱,当前总价钱-对应购物项的小计
+            //先计算金额再删，否则有空指针异常
+            cart.setTotal(cart.getTotal() - cartItems.get(pid).getSubtotal());
+            //删除对应pid的商品
+            cartItems.remove(pid);
+            //封装回去
+            cart.setCartItems(cartItems);
+        }
+
+        session.setAttribute("cart", cart);
+
+        response.sendRedirect(request.getContextPath() + "/cart.jsp");
+    }
+    //清空购物车
+    public void clearCart(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        HttpSession session = request.getSession();
+        session.removeAttribute("cart");
+        response.sendRedirect(request.getContextPath() + "/cart.jsp");
     }
 }
 
