@@ -3,12 +3,19 @@ package hh.szu.web.servlet;
 import com.google.gson.Gson;
 import hh.szu.domain.*;
 import hh.szu.sevice.ProductService;
+import hh.szu.utils.CommonUtils;
+import hh.szu.utils.PaymentUtil;
+import org.apache.commons.beanutils.BeanUtils;
+import org.ietf.jgss.Oid;
 
 import javax.servlet.Servlet;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.*;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 @WebServlet(name = "ProductServlet", urlPatterns = "/Product")
@@ -27,6 +34,7 @@ public class ProductServlet extends BaseServlet {
     //显示商品类别的功能
     public void category(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         request.setCharacterEncoding("utf-8");
+        response.setContentType("text/html;charset=utf-8");
 
         ProductService service = new ProductService();
         List<Category> categoryList = service.findAllCategory();
@@ -227,11 +235,167 @@ public class ProductServlet extends BaseServlet {
 
         response.sendRedirect(request.getContextPath() + "/cart.jsp");
     }
+
     //清空购物车
     public void clearCart(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         HttpSession session = request.getSession();
         session.removeAttribute("cart");
         response.sendRedirect(request.getContextPath() + "/cart.jsp");
+    }
+
+    //提交订单
+    public void submitOrder(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        HttpSession session = request.getSession();
+        //判断用户是否已经登录，未登录则要求先登录
+        User user = (User) session.getAttribute("user");
+        if (user == null) {
+            response.sendRedirect(request.getContextPath() + "/login.jsp");
+            return;
+        }
+
+        //目的：封装好一个Order对象 传递给service层
+        Order order = new Order();
+
+        //1、private String oid;//该订单的订单号
+        String oid = CommonUtils.getUUID();
+        order.setOid(oid);
+
+        //2、private Date ordertime;//下单时间
+        //取当前时间
+        Date nowdate = new Date();
+        //转换时间格式
+        SimpleDateFormat simpleDate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        order.setOrdertime(Timestamp.valueOf(simpleDate.format(nowdate)));
+
+        //3、private double total;//该订单的总金额
+        //获得session中的购物车
+        Cart cart = (Cart) session.getAttribute("cart");
+        double total = cart.getTotal();
+        order.setTotal(total);
+
+        //4、private int state;//订单支付状态 1代表已付款 0代表未付款
+        order.setState(0);
+
+        //5、private String address;//收货地址
+        order.setAddress(null);
+
+        //6、private String name;//收货人
+        order.setName(null);
+
+        //7、private String telephone;//收货人电话
+        order.setTelephone(null);
+
+        //8、private User user;//该订单属于哪个用户
+        order.setUser(user);
+
+        //9、该订单中有多少订单项List<OrderItem> orderItems = new ArrayList<OrderItem>();
+        //获得购物车中的购物项的集合map
+        Map<String, CartItem> cartItems = cart.getCartItems();
+        for (Map.Entry<String, CartItem> entry : cartItems.entrySet()) {
+            //取出每一个购物项
+            CartItem cartItem = entry.getValue();
+            //创建新的订单项
+            OrderItem orderItem = new OrderItem();
+            //1)private String itemid;//订单项的id
+            orderItem.setItemid(CommonUtils.getUUID());
+            //2)private int count;//订单项内商品的购买数量
+            orderItem.setCount(cartItem.getBuyNum());
+            //3)private double subtotal;//订单项小计
+            orderItem.setSubtotal(cartItem.getSubtotal());
+            //4)private Product product;//订单项内部的商品
+            orderItem.setProduct(cartItem.getProduct());
+            //5)private Order order;//该订单项属于哪个订单
+            orderItem.setOrder(order);
+
+            //将该订单项添加到订单的订单项集合中
+            order.getOrderItems().add(orderItem);
+        }
+
+        //order对象封装完毕
+        //传递数据到service层
+        ProductService service = new ProductService();
+        service.submitOrder(order);
+
+        session.setAttribute("order", order);
+
+        //页面跳转
+        response.sendRedirect(request.getContextPath() + "/order_info.jsp");
+    }
+
+
+    //确认订单的信息--更新收货人信息和在线支付
+    public void confirmOrder(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        //1、更新收货人信息
+        Map<String,String[]> properties = request.getParameterMap();
+        Order order = new Order();
+        try {
+            BeanUtils.populate(order,properties);
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        } catch (InvocationTargetException e) {
+            e.printStackTrace();
+        }
+
+        ProductService service = new ProductService();
+        service.updateOrder(order);
+
+        //2、在线支付
+		/*if(pd_FrpId.equals("ABC-NET-B2C")){
+			//介入农行的接口
+		}else if(pd_FrpId.equals("ICBC-NET-B2C")){
+			//接入工行的接口
+		}*/
+        //.......
+
+        //只接入一个接口，这个接口已经集成所有的银行接口了  ，这个接口是第三方支付平台提供的
+        //接入的是易宝支付
+        // 获得 支付必须基本数据
+        String orderid = request.getParameter("oid");
+        //String money = order.getTotal()+"";//支付金额
+        String money = "0.01";//支付金额
+        // 银行
+        String pd_FrpId = request.getParameter("pd_FrpId");
+
+        // 发给支付公司需要哪些数据
+        String p0_Cmd = "Buy";
+        String p1_MerId = ResourceBundle.getBundle("merchantInfo").getString("p1_MerId");
+        String p2_Order = orderid;
+        String p3_Amt = money;
+        String p4_Cur = "CNY";
+        String p5_Pid = "";
+        String p6_Pcat = "";
+        String p7_Pdesc = "";
+        // 支付成功回调地址 ---- 第三方支付公司会访问、用户访问
+        // 第三方支付可以访问网址
+        String p8_Url = ResourceBundle.getBundle("merchantInfo").getString("callback");
+        String p9_SAF = "";
+        String pa_MP = "";
+        String pr_NeedResponse = "1";
+        // 加密hmac 需要密钥
+        String keyValue = ResourceBundle.getBundle("merchantInfo").getString(
+                "keyValue");
+        String hmac = PaymentUtil.buildHmac(p0_Cmd, p1_MerId, p2_Order, p3_Amt,
+                p4_Cur, p5_Pid, p6_Pcat, p7_Pdesc, p8_Url, p9_SAF, pa_MP,
+                pd_FrpId, pr_NeedResponse, keyValue);
+
+
+        String url = "https://www.yeepay.com/app-merchant-proxy/node?pd_FrpId="+pd_FrpId+
+                "&p0_Cmd="+p0_Cmd+
+                "&p1_MerId="+p1_MerId+
+                "&p2_Order="+p2_Order+
+                "&p3_Amt="+p3_Amt+
+                "&p4_Cur="+p4_Cur+
+                "&p5_Pid="+p5_Pid+
+                "&p6_Pcat="+p6_Pcat+
+                "&p7_Pdesc="+p7_Pdesc+
+                "&p8_Url="+p8_Url+
+                "&p9_SAF="+p9_SAF+
+                "&pa_MP="+pa_MP+
+                "&pr_NeedResponse="+pr_NeedResponse+
+                "&hmac="+hmac;
+
+        //重定向到第三方支付平台
+        response.sendRedirect(url);
     }
 }
 

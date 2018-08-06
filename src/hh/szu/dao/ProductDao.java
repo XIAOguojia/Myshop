@@ -1,14 +1,13 @@
 package hh.szu.dao;
 
-import hh.szu.domain.Category;
-import hh.szu.domain.PageBean;
-import hh.szu.domain.Product;
+import hh.szu.domain.*;
 import hh.szu.utils.DataSourceUtils;
 import org.apache.commons.dbutils.QueryRunner;
 import org.apache.commons.dbutils.handlers.BeanHandler;
 import org.apache.commons.dbutils.handlers.BeanListHandler;
 import org.apache.commons.dbutils.handlers.ScalarHandler;
 
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
 
@@ -60,5 +59,40 @@ public class ProductDao {
         QueryRunner queryRunner = new QueryRunner(DataSourceUtils.getDataSource());
         String sql = "select * from product where pid=?";
         return queryRunner.query(sql,new BeanHandler<>(Product.class),pid);
+    }
+
+    //调用dao存储order表数据的方法
+    public void addOrders(Order order) throws SQLException {
+        QueryRunner runner = new QueryRunner();
+        String sql = "insert into orders values(?,?,?,?,?,?,?,?)";
+        Connection conn = DataSourceUtils.getConnection();
+        runner.update(conn,sql, order.getOid(),order.getOrdertime(),order.getTotal(),
+                order.getState(),order.getAddress(),order.getName(),order.getTelephone(),
+                order.getUser().getUid());
+    }
+
+    // 调用dao存储orderItem的方法
+    public void addOrderItem(Order order) throws SQLException {
+        QueryRunner runner = new QueryRunner();
+        String sql = "insert into orderitem values(?,?,?,?,?)";
+        Connection connection = DataSourceUtils.getConnection();
+        List<OrderItem> orderItems = order.getOrderItems();
+        for (OrderItem orderItem: orderItems){
+            runner.update(connection,sql,orderItem.getItemid(),orderItem.getCount(),
+                    orderItem.getSubtotal(),orderItem.getProduct().getPid(),
+                    orderItem.getOrder().getOid());
+        }
+    }
+
+    public void updateOrder(Order order) throws SQLException {
+        QueryRunner queryRunner = new QueryRunner(DataSourceUtils.getDataSource());
+        String sql = "update orders set address=?,name=?,telephone=? where oid=?";
+        queryRunner.update(sql,order.getAddress(),order.getName(),order.getTelephone(),order.getOid());
+    }
+
+    public void updateOrderState(String r6_order) throws SQLException {
+        QueryRunner queryRunner = new QueryRunner(DataSourceUtils.getDataSource());
+        String sql = "update orders set state=? where oid=?";
+        queryRunner.update(sql,1,r6_order);
     }
 }
