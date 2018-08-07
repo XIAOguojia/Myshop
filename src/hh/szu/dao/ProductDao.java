@@ -5,11 +5,13 @@ import hh.szu.utils.DataSourceUtils;
 import org.apache.commons.dbutils.QueryRunner;
 import org.apache.commons.dbutils.handlers.BeanHandler;
 import org.apache.commons.dbutils.handlers.BeanListHandler;
+import org.apache.commons.dbutils.handlers.MapListHandler;
 import org.apache.commons.dbutils.handlers.ScalarHandler;
 
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by intellij IDEA
@@ -94,5 +96,17 @@ public class ProductDao {
         QueryRunner queryRunner = new QueryRunner(DataSourceUtils.getDataSource());
         String sql = "update orders set state=? where oid=?";
         queryRunner.update(sql,1,r6_order);
+    }
+
+    public List<Order> findAllOrders(String uid) throws SQLException {
+        QueryRunner queryRunner = new QueryRunner(DataSourceUtils.getDataSource());
+        String sql = "select * from orders where uid=?";
+        return queryRunner.query(sql,new BeanListHandler<>(Order.class),uid);
+    }
+
+    public List<Map<String, Object>> findAllOrderItemByOid(String oid) throws SQLException {
+        QueryRunner queryRunner = new QueryRunner(DataSourceUtils.getDataSource());
+        String sql = "select i.count,i.subtotal,p.pimage,p.pname,p.shop_price from orderitem i,product p where i.pid=p.pid and i.oid=?";
+        return queryRunner.query(sql,new MapListHandler(),oid);
     }
 }

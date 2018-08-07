@@ -246,10 +246,11 @@ public class ProductServlet extends BaseServlet {
     //提交订单
     public void submitOrder(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         HttpSession session = request.getSession();
-        //判断用户是否已经登录，未登录则要求先登录
+
         User user = (User) session.getAttribute("user");
-        if (user == null) {
-            response.sendRedirect(request.getContextPath() + "/login.jsp");
+        //判断用户是否登录
+        if (user == null){
+            response.sendRedirect(request.getContextPath()+"/login.jsp");
             return;
         }
 
@@ -326,10 +327,10 @@ public class ProductServlet extends BaseServlet {
     //确认订单的信息--更新收货人信息和在线支付
     public void confirmOrder(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         //1、更新收货人信息
-        Map<String,String[]> properties = request.getParameterMap();
+        Map<String, String[]> properties = request.getParameterMap();
         Order order = new Order();
         try {
-            BeanUtils.populate(order,properties);
+            BeanUtils.populate(order, properties);
         } catch (IllegalAccessException e) {
             e.printStackTrace();
         } catch (InvocationTargetException e) {
@@ -379,23 +380,93 @@ public class ProductServlet extends BaseServlet {
                 pd_FrpId, pr_NeedResponse, keyValue);
 
 
-        String url = "https://www.yeepay.com/app-merchant-proxy/node?pd_FrpId="+pd_FrpId+
-                "&p0_Cmd="+p0_Cmd+
-                "&p1_MerId="+p1_MerId+
-                "&p2_Order="+p2_Order+
-                "&p3_Amt="+p3_Amt+
-                "&p4_Cur="+p4_Cur+
-                "&p5_Pid="+p5_Pid+
-                "&p6_Pcat="+p6_Pcat+
-                "&p7_Pdesc="+p7_Pdesc+
-                "&p8_Url="+p8_Url+
-                "&p9_SAF="+p9_SAF+
-                "&pa_MP="+pa_MP+
-                "&pr_NeedResponse="+pr_NeedResponse+
-                "&hmac="+hmac;
+        String url = "https://www.yeepay.com/app-merchant-proxy/node?pd_FrpId=" + pd_FrpId +
+                "&p0_Cmd=" + p0_Cmd +
+                "&p1_MerId=" + p1_MerId +
+                "&p2_Order=" + p2_Order +
+                "&p3_Amt=" + p3_Amt +
+                "&p4_Cur=" + p4_Cur +
+                "&p5_Pid=" + p5_Pid +
+                "&p6_Pcat=" + p6_Pcat +
+                "&p7_Pdesc=" + p7_Pdesc +
+                "&p8_Url=" + p8_Url +
+                "&p9_SAF=" + p9_SAF +
+                "&pa_MP=" + pa_MP +
+                "&pr_NeedResponse=" + pr_NeedResponse +
+                "&hmac=" + hmac;
 
         //重定向到第三方支付平台
         response.sendRedirect(url);
+    }
+
+    //我的订单
+        public void myOrders(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+
+        HttpSession session = request.getSession();
+        User user = (User) session.getAttribute("user");
+        //判断用户是否登录
+        if (user == null){
+            response.sendRedirect(request.getContextPath()+"/login.jsp");
+            return;
+        }
+
+        ProductService service = new ProductService();
+        //查询该用户的所有的订单信息(单表查询orders表)
+        //集合中的每一个Order对象的数据是不完整的 缺少List<OrderItem> orderItems数据
+        List<Order> orderList = service.findAllOrders(user.getUid());
+        //循环所有的订单 为每个订单填充订单项集合信息
+        if (orderList != null) {
+            for (Order order : orderList) {
+                //获得每一个订单的oid
+                String oid = order.getOid();
+                //查询该订单的所有的订单项---mapList封装的是多个订单项和该订单项中的商品的信息
+                List<Map<String, Object>> mapList = service.findAllOrderItemByOid(oid);
+                //循环所有订单为每个订单填充订单项集合信息
+                for (Map<String,Object> map:mapList){
+                    try {
+                        //从map中取出count，subtotal封装到OrderItem中
+                        OrderItem item = new OrderItem();
+                        BeanUtils.populate(item,map);
+                        //从map中取出pimage，pname，shop_price封装到Product中
+                        Product product = new Product();
+                        BeanUtils.populate(product,map);
+                        //将Product封装到OrderItem中
+                        item.setProduct(product);
+                        //将OrderItem封装到order的orderItems中
+                        order.getOrderItems().add(item);
+                    } catch (IllegalAccessException e) {
+                        e.printStackTrace();
+                    } catch (InvocationTargetException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+            }
+        }
+
+
+        //orderList封装完整了
+        request.setAttribute("orderList", orderList);
+
+        request.getRequestDispatcher("/order_list.jsp").forward(request, response);
+    }
+
+    //退出登录
+    public void logout(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        //将user从session中删除
+        HttpSession session = request.getSession();
+        session.removeAttribute("user");
+        //将cookie从客户端删除
+        Cookie cookie_username = new Cookie("cookie_username","");
+        cookie_username.setMaxAge(0);
+        //创建存储密码的cookie
+        Cookie cookie_password = new Cookie("cookie_password","");
+        cookie_password.setMaxAge(0);
+
+        response.addCookie(cookie_username);
+        response.addCookie(cookie_password);
+
+        response.sendRedirect(request.getContextPath()+"/login.jsp");
     }
 }
 

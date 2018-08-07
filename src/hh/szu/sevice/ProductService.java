@@ -9,6 +9,7 @@ import hh.szu.utils.DataSourceUtils;
 
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by intellij IDEA
@@ -142,5 +143,29 @@ public class ProductService {
         } catch (SQLException e) {
             e.printStackTrace();
         }
+    }
+
+    public List<Order> findAllOrders(String uid) {
+        ProductDao dao = new ProductDao();
+        List<Order> orderList = null;
+        try {
+            orderList = dao.findAllOrders(uid);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return orderList;
+    }
+
+    public List<Map<String, Object>> findAllOrderItemByOid(String oid) {
+        ProductDao dao = new ProductDao();
+        List<Map<String,Object>> mapList =null;
+        try {
+            mapList= dao.findAllOrderItemByOid(oid);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return mapList;
+
     }
 }

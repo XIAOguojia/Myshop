@@ -2,6 +2,13 @@
     pageEncoding="UTF-8"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <!DOCTYPE html>
+<script type="text/javascript">
+    function quit() {
+        if (confirm("您是否要退出登录")) {
+            location.href = "${pageContext.request.contextPath }/Product?method=logout";
+        }
+    }
+</script>
 <!-- 登录 注册 购物车... -->
 <div class="container-fluid">
 	<div class="col-md-4">
@@ -16,13 +23,16 @@
 			<c:if test="${empty user }">
 				<li><a href="login.jsp">登录</a></li>
 				<li><a href="register.jsp">注册</a></li>
+
 			</c:if>
 			<c:if test="${!empty user }">
 				<li style="color:red">欢迎您，${user.username }</li>
+                <li><a href="javascript:;" onclick="quit()">退出</a></li>
+
 			</c:if>
 			
 			<li><a href="cart.jsp">购物车</a></li>
-			<li><a href="order_list.jsp">我的订单</a></li>
+			<li><a href="${pageContext.request.contextPath }/Product?method=myOrders">我的订单</a></li>
 		</ol>
 	</div>
 </div>
