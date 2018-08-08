@@ -4,11 +4,30 @@
 		<meta http-equiv="Content-Language" content="zh-cn">
 		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 		<LINK href="${pageContext.request.contextPath}/css/Style1.css" type="text/css" rel="stylesheet">
+		<script type="text/javascript" src="${pageContext.request.contextPath }/js/jquery-1.11.3.min.js"></script>
+        <script type="text/javascript">
+            $(function () {
+
+                //页面加载完毕后去异步获得分类数据
+                $.post(
+                    "${pageContext.request.contextPath }/admin?method=findAllCategory",
+                    function (data) {
+                        //拼接多个<option></option>放到select中
+                        var content = "";
+                        for (var i = 0; i < data.length; i++) {
+                            content += "<option value='"+data[i].cid+"'>"+data[i].cname+"</option>"
+                        }
+                        $("#cid").html(content);
+                    },
+                    "json"
+                );
+            });
+        </script>
 	</HEAD>
 	
 	<body>
 		<!--  -->
-		<form id="userAction_save_do" name="Form1" action="${pageContext.request.contextPath}/adminProduct_save.action" method="post" enctype="multipart/form-data">
+		<form id="userAction_save_do" name="Form1" action="${pageContext.request.contextPath}/adminAddProduct" method="post" enctype="multipart/form-data">
 			&nbsp;
 			<table cellSpacing="1" cellPadding="5" width="100%" align="center" bgColor="#eeeeee" style="border: 1px solid #8ba7e3" border="0">
 				<tr>
@@ -24,7 +43,7 @@
 						商品名称：
 					</td>
 					<td class="ta_01" bgColor="#ffffff">
-						<input type="text" name="pname" value="" id="userAction_save_do_logonName" class="bg"/>
+						<input type="text" name="pname" value="" id="pname" class="bg"/>
 					</td>
 					<td width="18%" align="center" bgColor="#f5fafe" class="ta_01">
 						是否热门：
@@ -41,13 +60,13 @@
 						市场价格：
 					</td>
 					<td class="ta_01" bgColor="#ffffff">
-						<input type="text" name="market_price" value="" id="userAction_save_do_logonName" class="bg"/>
+						<input type="text" name="market_price" value="" id="market_price" class="bg"/>
 					</td>
 					<td width="18%" align="center" bgColor="#f5fafe" class="ta_01">
 						商城价格：
 					</td>
 					<td class="ta_01" bgColor="#ffffff">
-						<input type="text" name="shop_price" value="" id="userAction_save_do_logonName" class="bg"/>
+						<input type="text" name="shop_price" value="" id="shop_price" class="bg"/>
 					</td>
 				</tr>
 				<tr>
@@ -63,10 +82,8 @@
 						所属分类：
 					</td>
 					<td class="ta_01" bgColor="#ffffff" colspan="3">
-						<select name="categorySecond.csid">
-							<option value="">大型电器</option>
-							<option value="">手机数码</option>
-							<option value="">衣帽箱包</option>
+						<select id="cid" name="cid">
+
 						</select>
 					</td>
 				</tr>
@@ -81,7 +98,7 @@
 				<tr>
 					<td class="ta_01" style="WIDTH: 100%" align="center"
 						bgColor="#f5fafe" colSpan="4">
-						<button type="submit" id="userAction_save_do_submit" value="确定" class="button_ok">
+						<button type="submit" id="submit" value="确定" class="button_ok">
 							&#30830;&#23450;
 						</button>
 
