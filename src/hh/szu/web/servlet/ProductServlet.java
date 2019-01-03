@@ -162,6 +162,14 @@ public class ProductServlet extends BaseServlet {
     //将商品添加到购物车中
     public void addProductToCart(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         HttpSession session = request.getSession();
+
+        User user = (User) session.getAttribute("user");
+        //判断用户是否登录
+        if (user == null){
+            response.sendRedirect(request.getContextPath()+"/login.jsp");
+            return;
+        }
+
         ProductService service = new ProductService();
         //获得要放到购物车中的商品的pid
         String pid = request.getParameter("pid");

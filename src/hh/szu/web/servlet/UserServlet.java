@@ -135,7 +135,7 @@ public class UserServlet extends BaseServlet {
             //***************判断用户是否勾选了自动登录*****************
             String autoLogin = request.getParameter("autoLogin");
 
-            System.out.println(username+"  "+password+"  "+autoLogin);
+//            System.out.println(username+"  "+password+"  "+autoLogin);
             if("true".equals(autoLogin)){
                 //要自动登录
                 //创建存储用户名的cookie

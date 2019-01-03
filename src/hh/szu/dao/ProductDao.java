@@ -28,7 +28,7 @@ public class ProductDao {
         return queryRunner.query(sql, new BeanListHandler<Product>(Product.class), 1, 0, 9);
     }
 
-    //获得热门商品
+    //获得最新商品
     public List<Product> findNewProductList() throws SQLException {
         QueryRunner queryRunner = new QueryRunner(DataSourceUtils.getDataSource());
         String sql = "select * from product order by pdate desc limit ?,?";

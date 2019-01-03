@@ -6,6 +6,8 @@ import redis.clients.jedis.JedisPoolConfig;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 
 /**
@@ -50,6 +52,7 @@ public class JedisUtils {
     public static void main(String[] args) {
         Jedis redis= JedisUtils.getJedis();
         System.out.println(redis.get("name"));
+
     }
 
 }
